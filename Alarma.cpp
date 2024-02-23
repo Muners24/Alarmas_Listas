@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <windows.h>
 
+//compilar con: g++ -o Alarma alarma.cpp -lwinmm -mconsole
 #define STR 30
 
 typedef struct _datos
