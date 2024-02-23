@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
-#include <unistd.h>
+#include <windows.h>
 
 #define STR 30
-
-
 
 typedef struct _datos
 {
@@ -27,7 +25,7 @@ typedef struct _nodo
 typedef Tnodo* Tlista;
 
 int validNum(char txt[],int limi,int lims);
-int msgs(void);
+void msgs(void);
 void sistema(void);
 void menu(void);
 void agregarAlarma(Tlista &lista,tm **actual,int c);
@@ -36,8 +34,11 @@ int diaValid(int mes,int leap);
 void insertarInicio(Tlista &lista,Tnodo **nuevo);
 void insertarFin(Tlista &indice,Tnodo **nuevo);
 void printList(Tnodo *lista);
-void printAlarma(Tnodo *alarma);
-void eliminarAlarma(Tlista &lista);
+void printAlarma(Tnodo *alarma,int c);
+void eliminarAlarma(Tlista &lista,int c);
+void delAlarma(Tlista &lista, int i);
+void modificarAlarma(Tlista &lista,tm *actual);
+void editAlarma(Tnodo *indice,tm **actual,int i);
 void insertarPos(Tlista &indice,Tnodo **nuevo);
 
 int main(void)
@@ -46,16 +47,15 @@ int main(void)
     return 0;
 }
 
-int msgs(void)
+void msgs(void)
 {
-    printf(" Alarmas\n\n");
-    printf("1) Agregar Alarma");
-    printf("\n2) Eliminar Alarma");
-    printf("\n3) Editar Alarmas");
-    printf("\n4) Ver alarmas");
-    printf("\n5) Agregar sonido");
-    printf("\n6) Salir\n");
-    return (validNum("Escoge una opcion: ",1,8));
+    printf("\n\n Menu\n\n");
+    printf("a) Agregar Alarma");
+    printf("\nb) Eliminar Alarma");
+    printf("\nc) Ver alarmas");
+    printf("\nd) Modificar Alarma");
+    printf("\ne) Salir\n");
+    printf("Esoge una opcion: ");
 }
 
 void sistema(void)
@@ -66,39 +66,112 @@ void sistema(void)
     int op;
     int c=0;
     char tecla;
+
+    msgs();
     do
     {
         t = time(NULL);
         actual = localtime(&t);
-        printf("Fecha actual: %02d/%02d/%d %d:%d \n", actual->tm_mday, actual->tm_mon + 1, actual->tm_year + 1900,actual->tm_hour,actual->tm_min);
-
+        //printf("Fecha actual: %02d/%02d/%d\n Hora actual: %d:%d \n", actual->tm_mday, actual->tm_mon + 1, actual->tm_year + 1900,actual->tm_hour,actual->tm_min);
+        
         if(kbhit())
         {
             fflush(stdin);
             tecla=getch();
             if(tecla=='a')
             {
+                system("cls");
+                printf("Agregar alarma\n");
                 agregarAlarma(lista,&actual,c);
                 c++;
-                printf("\nSe agrego una alarma correctamente\n");
+                printf("\nSe agrego una alarma correctamente\n\n");
                 system("pause");
-            }
-            if(tecla=='n')
-            {
-                eliminarAlarma(lista);
-                c--;
+                system("cls");
+                if(lista!=NULL)
+                {
+                    printf("Proxima alarma\n\n");
+                    printf("Fecha: %02d/%02d/%d\nHora: %02d:%02d", lista->datos.dia, lista->datos.mes, lista->datos.anio, lista->datos.hora, lista->datos.min);
+                }
+                msgs();
             }
             if(tecla=='b')
             {
+                eliminarAlarma(lista,c);
+                c--;
+                system("cls");
+                if(lista!=NULL)
+                {
+                    printf("Proxima alarma\n\n");
+                    printf("Fecha: %02d/%02d/%d\nHora: %02d:%02d", lista->datos.dia, lista->datos.mes, lista->datos.anio, lista->datos.hora, lista->datos.min);
+                }
+                msgs();
+            }
+            if(tecla=='c')
+            {
+                system("cls");
                 printList(lista);
+                printf("\n");
                 system("pause");
+                system("cls");
+                if(lista!=NULL)
+                {
+                    printf("Proxima alarma\n\n");
+                    printf("Fecha: %02d/%02d/%d\nHora: %02d:%02d", lista->datos.dia, lista->datos.mes, lista->datos.anio, lista->datos.hora, lista->datos.min);
+                }
+                msgs();
+            }
+            if(tecla == 'd')
+            {
+                modificarAlarma(lista,actual);
+                system("cls");
+                if(lista!=NULL)
+                {
+                    printf("Proxima alarma\n\n");
+                    printf("Fecha: %02d/%02d/%d\nHora: %02d:%02d", lista->datos.dia, lista->datos.mes, lista->datos.anio, lista->datos.hora, lista->datos.min);
+                }
+                msgs();
             }
         }
 
-    }while(1);
+        if(lista!= NULL)
+        {
+            if(lista->datos.anio<=actual->tm_year+1900)
+            {
+                if(lista->datos.mes <= actual->tm_mon+1)
+                {
+                    if(lista->datos.dia <= actual->tm_mday)
+                    {
+                        if(lista->datos.hora <= actual->tm_hour)
+                        {
+                            if(lista->datos.min <= actual->tm_min)
+                            {
+                                PlaySound(TEXT("C:"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+                                printf("Alarma sonando\n\nPresiona x para detenerla\n");
+                                if(kbhit)
+                                {
+                                    fflush(stdin);
+                                    tecla=getch();
+                                    if(tecla=='x')
+                                    {
+                                        delAlarma(lista,1);
+                                        PlaySound(NULL, 0, 0);
+                                        system("cls");
+                                        if(lista!=NULL)
+                                        {
+                                            printf("Proxima alarma\n\n");
+                                            printf("Fecha: %02d/%02d/%d\nHora: %02d:%02d", lista->datos.dia, lista->datos.mes, lista->datos.anio, lista->datos.hora, lista->datos.min);
+                                        }
+                                        msgs();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }while(tecla != 'e');
 }
-
-
 
 void agregarAlarma(Tlista &lista,tm **actual,int c)
 {
@@ -117,7 +190,7 @@ void agregarAlarma(Tlista &lista,tm **actual,int c)
     mes=(*actual)->tm_mon+1;
 
     //año
-    nuevo->datos.anio=validNum("Ingresa el año (cuatro digitos): ",anio,3000);
+    nuevo->datos.anio=validNum("\n\nIngresa el año (cuatro digitos): ",anio,3000);
 
     if(nuevo->datos.anio==anio)
     {
@@ -254,7 +327,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
             else
             {
                 insertarFin(lista,nuevo);
-                system("pause");
                 return 1;
             }
         }
@@ -280,7 +352,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
                 
             }
         }
-
     }
 
     salir=0;
@@ -297,7 +368,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
                 else
                 {
                     insertarFin(lista,nuevo);
-                    system("pause");
                     return 1;
                 }
             }
@@ -342,7 +412,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
                     else
                     {
                         insertarFin(lista,nuevo);
-                        system("pause");
                         return 1;
                     }
                 }
@@ -390,7 +459,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
                         else
                         {
                             insertarFin(lista,nuevo);
-                            system("pause");
                             return 1;
                         }
                     }
@@ -441,7 +509,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
                             else
                             {
                                 insertarFin(lista,nuevo);
-                                system("pause");
                                 return 1;
                             }
                         }
@@ -472,126 +539,6 @@ int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo)
             }
         }
     }
-    /*
-    if(c==1)
-    {
-        if((*nuevo)->)
-    }
-    if(indice->siguiente!=NULL)
-    {
-        while ((*nuevo)->datos.anio>indice->siguiente->datos.anio)
-        {
-            indice=indice->siguiente;
-            jump++;
-            if(jump==(c-1))
-            {
-                insertarFin(lista,nuevo);
-                system("pause");
-                return 1;
-            }
-        }
-    }
-    else
-    {
-
-    }
-
-    
-
-    if(indice->siguiente!=NULL)
-    {
-        while((*nuevo)->datos.anio == indice->siguiente->datos.anio)
-        {
-            if((*nuevo)->datos.mes>indice->siguiente->datos.mes)
-            {
-                indice=indice->siguiente;
-                jump++;
-                if(jump==(c-1))
-                {
-                    insertarFin(lista,nuevo);
-                    system("pause");
-                    return 1;
-                }
-            }
-        }
-    }
-
-    if(indice->siguiente!=NULL)
-    {
-        while(indice->siguiente->datos.anio==(*nuevo)->datos.anio)
-        {
-            if((*nuevo)->datos.mes == indice->siguiente->datos.mes)
-            {
-                if((*nuevo)->datos.dia>indice->siguiente->datos.dia)
-                {
-                    indice=indice->siguiente;
-                    jump++;
-                    if(jump==(c-1))
-                    {
-                        insertarFin(lista,nuevo);
-                        system("pause");
-                        return 1;
-                    }
-                }
-            }
-        }
-    }
-
-    if(indice->siguiente!=NULL)
-    {
-        while(indice->siguiente->datos.anio==(*nuevo)->datos.anio)
-        {
-            if((*nuevo)->datos.mes == indice->siguiente->datos.mes)
-            {
-                if((*nuevo)->datos.dia == indice->siguiente->datos.dia)
-                {
-                    if((*nuevo)->datos.hora>indice->siguiente->datos.hora)
-                    {
-                        indice=indice->siguiente;
-                        jump++;
-                        if(jump==(c-1))
-                        {
-                            insertarFin(lista,nuevo);
-                            system("pause");
-                            return 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if(indice->siguiente!=NULL)
-    {
-        while(indice->siguiente->datos.anio==(*nuevo)->datos.anio)
-        {
-            if((*nuevo)->datos.mes == indice->siguiente->datos.mes)
-            {
-                if((*nuevo)->datos.dia == indice->siguiente->datos.dia)
-                {
-                    if((*nuevo)->datos.hora == indice->siguiente->datos.hora)
-                    {
-                        if((*nuevo)->datos.min > indice->siguiente->datos.min)
-                        {
-                            indice=indice->siguiente;
-                            jump++;
-                            if(jump==(c-1))
-                            {
-                                insertarFin(lista,nuevo);
-                                system("pause");
-                                return 1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    */
-    printf("\nfin\n");
-    system("pause");
-
-    
     return 1;
 
 }
@@ -610,7 +557,6 @@ void insertarInicio(Tlista &lista,Tnodo **nuevo)
     }
 }
 
-//probar completo si no funciona
 void insertarFin(Tlista &lista,Tnodo **nuevo)
 { 
     Tlista indice=lista;
@@ -633,16 +579,17 @@ void insertarPos(Tlista &indice,Tnodo **nuevo)
     indice->siguiente=*nuevo;
 }
 
-void eliminarAlarma(Tlista &lista)
+void eliminarAlarma(Tlista &lista,int c)
 {
     Tlista indice=lista;
+    int i=1;
     char tecla='0';
     if(lista!=NULL)
     {
         
         system("cls");
-        printAlarma(indice);
-        printf("\na) Anterior d) Siguiente s) Salir");
+        printAlarma(indice,i);
+        printf("\na) Anterior d) Siguiente s) Salir w) Eliminar");
         do
         {
             if(kbhit())
@@ -654,9 +601,10 @@ void eliminarAlarma(Tlista &lista)
                     if(indice->anterior!=NULL)
                     {
                         indice=indice->anterior;
+                        i--;
                         system("cls");
-                        printAlarma(indice);
-                        printf("\na) Anterior d) Siguiente s) Salir b) Eliminar");
+                        printAlarma(indice,i);
+                        printf("\na) Anterior d) Siguiente s) Salir w) Eliminar");
                     }
                 }
                 if(tecla=='d')
@@ -664,19 +612,25 @@ void eliminarAlarma(Tlista &lista)
                     if(indice->siguiente!=NULL)
                     {
                         indice=indice->siguiente;
+                        i++;
                         system("cls");
-                        printAlarma(indice);
-                        printf("\na) Anterior d) Siguiente s) Salir b) Eliminar");
+                        printAlarma(indice,i);
+                        printf("\na) Anterior d) Siguiente s) Salir w) Eliminar");
                     }
+                }
+
+                if(tecla == 'w')
+                {
+                    tecla = 's';
+                    delAlarma(lista,i);
+                    printf("\n\nSe elimino la alarma correctamente\n\n");
+                    system("pause");
                 }
             }
             
-        }while(tecla!='s' || tecla != 'b');
+        }while(tecla!='s');
         
-        if(tecla == 'b')
-        {
-            //falta aqui ***************************************************************************
-        }
+        
     }
     else
     {
@@ -685,18 +639,343 @@ void eliminarAlarma(Tlista &lista)
     }
 }
 
+void delAlarma(Tlista &lista, int i)
+{
+    i--;
+    if(i==0)
+    {
+        Tnodo *temp=lista;
+        if(lista->siguiente!=NULL)
+        {
+            lista=lista->siguiente;
+            lista->anterior=NULL;
+            free(temp);
+            return;
+        }
+        else
+        {
+            free(temp);
+            lista=NULL;
+            return;
+        }
+        
+    }
+
+    int j;
+    Tlista indice=lista;
+    Tnodo *temp;
+    for(j=0;j<i;j++)
+    {
+        indice=indice->siguiente;
+    }
+
+    
+    if(indice->siguiente != NULL)
+    {
+        temp=indice;
+        indice->siguiente->anterior=indice->anterior;
+        indice->anterior->siguiente=indice->siguiente;
+        free(temp);
+        return;
+    }
+    else
+    {
+        temp=indice;
+        indice->anterior->siguiente=NULL;
+        free(temp);
+        return;
+    }
+    
+}
+
+void modificarAlarma(Tlista &lista,tm *actual)
+{
+    Tlista indice=lista;
+    int i=1;
+    char tecla='0';
+    if(lista!=NULL)
+    {
+        
+        system("cls");
+        printAlarma(indice,i);
+        printf("\na) Anterior d) Siguiente s) Salir w) Modificar");
+        do
+        {
+            if(kbhit())
+            {
+                fflush(stdin);
+                tecla=getch();
+                if(tecla=='a')
+                {
+                    if(indice->anterior!=NULL)
+                    {
+                        indice=indice->anterior;
+                        i--;
+                        system("cls");
+                        printAlarma(indice,i);
+                        printf("\na) Anterior d) Siguiente s) Salir w) Modificar");
+                    }
+                }
+                if(tecla=='d')
+                {
+                    if(indice->siguiente!=NULL)
+                    {
+                        indice=indice->siguiente;
+                        i++;
+                        system("cls");
+                        printAlarma(indice,i);
+                        printf("\na) Anterior d) Siguiente s) Salir w) Modificar");
+                    }
+                }
+
+                if(tecla == 'w')
+                {
+                    tecla = 's';
+                    editAlarma(indice,&actual,i);
+                    printf("\n\nSe modifico la alarma correctamente\n\n");
+                    system("pause");
+                }
+            }
+            
+        }while(tecla!='s');
+    }
+    else
+    {
+        printf("\nNo hay alarmas\n");
+        system("pause");
+    }
+}
+
+void editAlarma(Tnodo *indice,tm **actual,int i)
+{
+    int op=0;
+    int leap;
+    int aniob;
+    int mesb;
+    int diab;
+    int horab;
+
+    int anio,mes;
+    anio=(*actual)->tm_year+1900;
+    mes=(*actual)->tm_mon+1;
+
+    if(indice->datos.anio==anio)
+    {
+        aniob=1;
+    }
+    else
+    {
+        aniob=0;
+    }
+
+    if((indice->datos.anio % 4) ==0)
+    {
+        leap=1;
+    }
+    else
+    {
+        leap=0;
+    }
+        
+    if(indice->datos.mes==mes)
+    {
+        mesb=1;
+    }
+    else
+    {
+        mesb=0;
+    }
+
+    if(indice->datos.dia==(*actual)->tm_mday)
+    {
+        diab=1;
+    }
+    else
+    {
+        diab=0;
+    }
+
+    if(indice->datos.hora==(*actual)->tm_hour)
+    {
+        horab=1;
+    }
+    else
+    {
+        horab=0;
+    }
+    do
+    {
+        system("cls");
+        printAlarma(indice,i);
+        printf("\n1) Cambiar año\n");
+        printf("2) Cambiar mes\n");
+        printf("3) Cambiar dia\n");
+        printf("4) Cambiar hora\n");
+        printf("5) Cambiar minuto\n");
+        printf("6) Salir\n");
+        op=validNum("Escoge una opcion: ",1,6);
+        system("cls");
+        switch (op)
+        {
+            case 1:
+                printAlarma(indice,i);
+                printf("\n");
+                indice->datos.anio=validNum("Año nuevo: ",anio,3000);
+                if(indice->datos.anio==anio)
+                {
+                    aniob=1;
+                }
+                else
+                {
+                    aniob=0;
+                }
+
+                if((indice->datos.anio % 4) ==0)
+                {
+                    leap=1;
+                }
+                else
+                {
+                    leap=0;
+                }
+                break;
+            case 2:
+                printAlarma(indice,i);
+                printf("\n");
+                if(aniob)
+                {
+                    indice->datos.mes=validNum("Mes nuevo: ",mes,12);
+                }
+                else
+                {
+                    indice->datos.mes=validNum("Mes nuevo: ",1,12);
+                }
+
+                if(indice->datos.mes==mes)
+                {
+                    mesb=1;
+                }
+                else
+                {
+                    mesb=0;
+                }
+                break;
+            case 3:
+                printAlarma(indice,i);
+                printf("\n");
+                if(aniob)
+                {
+                    if(mesb)
+                    {
+                        indice->datos.dia=validNum("Dia nuevo: : ",(*actual)->tm_mday,diaValid(indice->datos.mes,leap));
+                    }
+                    else
+                    {
+                        indice->datos.dia=validNum("Dia nuevo: : ",1,diaValid(indice->datos.mes,leap));
+                    }
+                }
+                else
+                {
+                    indice->datos.dia=validNum("Dia nuevo: : ",1,diaValid(indice->datos.mes,leap));
+                }
+                
+                if(indice->datos.dia==(*actual)->tm_mday)
+                {
+                    diab=1;
+                }
+                else
+                {
+                    diab=0;
+                }
+                break;
+            case 4:
+                printAlarma(indice,i);
+                printf("\n");
+                if(aniob)
+                {
+                    if(mesb)
+                    {
+                        if(diab)
+                        {
+                            indice->datos.hora=validNum("Hora nueva: ",(*actual)->tm_hour,23);
+                        }
+                        else
+                        {
+                            indice->datos.hora=validNum("Hora nueva: ",0,23);
+                        }
+                    }
+                    else
+                    {
+                        indice->datos.hora=validNum("Hora nueva: ",0,23);
+                    }
+                }
+                else
+                {
+                    indice->datos.hora=validNum("Hora nueva: ",0,23);
+                }
+
+                if(indice->datos.hora==(*actual)->tm_hour)
+                {
+                    horab=1;
+                }
+                else
+                {
+                    horab=0;
+                }
+                break;
+            case 5:
+                printAlarma(indice,i);
+                printf("\n");
+                if(aniob)
+                {
+                    if(mesb)
+                    {
+                        if(diab)
+                        {
+                            if(horab)
+                            {
+                                indice->datos.min=validNum("Minuto nuevo: ",(*actual)->tm_min,59);
+                            }
+                            else
+                            {
+                                indice->datos.min=validNum("Minuto nuevo: ",0,59);
+                            }
+                        }
+                        else
+                        {
+                            indice->datos.min=validNum("Minuto nuevo: ",0,59);
+                        }
+                    }
+                    else
+                    {
+                        indice->datos.min=validNum("Minuto nuevo: ",0,59);
+                    }
+                }
+                else
+                {
+                    indice->datos.min=validNum("Minuto nuevo: ",0,59);
+                }
+                break;
+        }
+    } while (op!=6);
+                    
+}
+
+//mostrar
 void printList(Tnodo *lista)
 {
+    int i=1;
     if(lista!=NULL)
     {
         Tlista indice=lista;
         
-        printAlarma(indice);
+        printAlarma(indice,i);
         
         while (indice->siguiente!=NULL)
         {
             indice=indice->siguiente;
-            printAlarma(indice);
+            i++;
+            printAlarma(indice,i);
         }
     }
     else
@@ -706,9 +985,9 @@ void printList(Tnodo *lista)
     }
 }
 
-void printAlarma(Tnodo *alarma)
+void printAlarma(Tnodo *alarma,int c)
 {
-    printf("\nAlarma\n\n");
+    printf("\nAlarma %d\n",c);
     printf("Fecha: %02d/%02d/%d\n",alarma->datos.dia,alarma->datos.mes,alarma->datos.anio);
     printf("Hora: %02d:%02d\n",alarma->datos.hora,alarma->datos.min);
 }
