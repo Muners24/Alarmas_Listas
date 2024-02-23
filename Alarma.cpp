@@ -27,7 +27,6 @@ typedef Tnodo* Tlista;
 int validNum(char txt[],int limi,int lims);
 void msgs(void);
 void sistema(void);
-void menu(void);
 void agregarAlarma(Tlista &lista,tm **actual,int c);
 int insertarAlarma(Tlista &lista,int c,Tnodo **nuevo);
 int diaValid(int mes,int leap);
